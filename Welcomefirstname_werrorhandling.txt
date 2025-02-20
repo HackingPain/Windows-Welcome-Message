@@ -1,0 +1,77 @@
+'---------------------------------------------------------------
+' Improved VBScript for Personalized Text-to-Speech Welcome
+'---------------------------------------------------------------
+
+' Enable error handling to catch unexpected issues.
+On Error Resume Next
+
+' Create a WScript Shell object to access environment variables.
+Dim shell, username, firstName
+Set shell = CreateObject("WScript.Shell")
+
+' Retrieve the current username from the environment variable.
+username = shell.ExpandEnvironmentStrings("%USERNAME%")
+
+' Check if the username contains a period (assumes "firstname.lastname").
+If InStr(username, ".") > 0 Then
+    firstName = Split(username, ".")(0)
+Else
+    firstName = username  ' Fallback: Use the full username if no period is found.
+End If
+
+' Build a personalized welcome message.
+Dim welcome
+welcome = "Welcome, " & firstName & "! You turn boo-boos into woo-hoos!"
+
+' Create a SAPI voice object for text-to-speech.
+Dim speech
+Set speech = CreateObject("SAPI.SPVoice")
+
+' Enumerate available voices using the GetVoices method.
+Dim voices, voice, voiceList, i
+Set voices = speech.GetVoices
+voiceList = ""
+
+' Loop through each installed voice and collect its description.
+If voices.Count > 0 Then
+    For i = 0 To voices.Count - 1
+        Set voice = voices.Item(i)
+        voiceList = voiceList & vbCrLf & voice.GetDescription
+    Next
+Else
+    voiceList = "No voices found."
+End If
+
+' Prompt the user to select a voice from the list.
+Dim chosenVoice, selectedVoice
+chosenVoice = InputBox("Available voices:" & vbCrLf & voiceList & vbCrLf & vbCrLf & _
+                         "Enter the exact name of the voice you want to use. Leave blank for default voice:", _
+                         "Select Voice")
+
+' If the user entered a voice name, try to find and set that voice.
+If Trim(chosenVoice) <> "" Then
+    Set selectedVoice = Nothing
+    For i = 0 To voices.Count - 1
+        Set voice = voices.Item(i)
+        ' Compare voice descriptions case-insensitively.
+        If LCase(voice.GetDescription) = LCase(chosenVoice) Then
+            Set selectedVoice = voice
+            Exit For
+        End If
+    Next
+    
+    ' If the chosen voice is found, assign it; otherwise, notify the user.
+    If Not selectedVoice Is Nothing Then
+        Set speech.Voice = selectedVoice
+    Else
+        MsgBox "Voice '" & chosenVoice & "' not found. Using default voice.", vbExclamation, "Voice Not Found"
+    End If
+End If
+
+' Use the selected (or default) voice to speak the welcome message.
+speech.Speak welcome
+
+' Check for errors and display an error message if needed.
+If Err.Number <> 0 Then
+    MsgBox "An error occurred: " & Err.Description, vbCritical, "Error"
+End If

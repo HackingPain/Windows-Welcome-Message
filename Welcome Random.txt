@@ -1,0 +1,19 @@
+Dim speech
+Dim username
+Dim firstName
+Dim welcome(2)
+
+username = CreateObject("WScript.Shell").ExpandEnvironmentStrings("%USERNAME%")
+firstName = Split(username, ".")(0)
+
+welcome(0) = "Welcome, " & firstName & "! You turn boo-boos into woo-hoos!"
+welcome(1) = "Welcome," & firstName & "! Ready to sprinkle your magic dust of care?"
+welcome(2) = "Hey there, Hero in Scrubs! Your care speaks volumes to grateful hearts"
+
+Randomize
+index = INT((2 - 0 + 1) * Rnd + 0 )
+
+
+
+Set speech =CreateObject("sapi.spvoice")
+speech.Speak welcome(index)
